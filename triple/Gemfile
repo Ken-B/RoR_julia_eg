@@ -43,3 +43,8 @@ group :development, :test do
   gem 'spring'
 end
 
+# Added
+gem 'simple_form' #for the number input on the web page
+gem 'ffi-rzmq'	#for ZMQ client on Rails side
+gem 'delayed_job_active_record' #longer calculations need to be run in background
+gem 'daemons' #for bin/delayed_job start
