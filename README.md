@@ -85,3 +85,66 @@ In the migration file that was created we add a `false` default value to the cal
 Execute the migration in the database with the usual:
 
 	rake db:migrate
+
+---
+
+###ZMQ
+
+A quick note on [ZMQ](http://en.wikipedia.org/wiki/%C3%98MQ), a high-performance asynchronous and distributed messaging library. That's a mouthful! Basically, it allows to send messages between different processes, programs or computers, that's how I look at it. And it does most of the dirty stuff for you. You just open a socket on one end and connect to it somewhere else, and it just works.
+
+Here I'll use JSON to structure the message. We'll use the REQ-REP pattern. We'll start a julia server as a REP service and later connect to it from Rails as a REQ.
+
+Here's the Julia server:
+
+	```julia
+	using JSON
+	using ZMQ
+
+	const ctx = Context()
+	sock = Socket(ctx, REP)
+	ZMQ.bind(sock, "tcp://*:7788")
+
+	function triple(x)
+		sleep(10)
+		3x
+	end
+
+	while true
+		println("Server running.")
+		msg = JSON.parse(bytestring(ZMQ.recv(sock)))
+		@show result = triple(float(msg["value"]))
+		ZMQ.send(sock, JSON.json({"result"=>result}))
+	end
+	```
+
+and in the number model we will define a calculation method that connects to this server
+	
+	```rb
+	#triple/app/models/number.rb
+	require 'ffi-rzmq'
+	require 'json'
+
+	class Number < ActiveRecord::Base
+	  def calculate
+	    
+	    context = ZMQ::Context.new
+	    sock = context.socket(ZMQ::REQ)
+	    sock.connect("tcp://localhost:7788")
+	    
+	    mgs_send = {:value => value}.to_json
+	    sock.send_string mgs_send
+
+	    msg_recv = ''
+	    sock.recv_string(msg_recv)
+
+	    result = JSON.parse(msg_recv)["result"]
+	    update_column :result, result
+	    update_column :calculated, true
+	    
+	    sock.close
+	    context.terminate
+	  end
+	  handle_asynchronously :calculate
+	  
+	end
+	```
