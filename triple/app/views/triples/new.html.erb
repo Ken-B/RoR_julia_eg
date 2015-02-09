@@ -1,2 +1,6 @@
-<h1>Triples#new</h1>
-<p>Find me in app/views/triples/new.html.erb</p>
+<h1>Enter a number to triple</h1>
+
+<%= simple_form_for :number, :url => url_for(:action => 'calc', :controller => 'triples') do |f| %>
+		<%= f.input :value, as: :float %>
+		<%= f.button :submit %>
+<% end %>

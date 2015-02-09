@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   get 'triples/index'
   get 'triples/new'
+  post 'triples/calc'
+  get 'triples/show/:id', to: 'triples#show', as:'triples_show'
+  get 'triples/status/:number_id', to: 'triples#status', as: 'triples_status'
   root 'triples#index'
 
   # The priority is based upon order of creation: first created -> highest priority.

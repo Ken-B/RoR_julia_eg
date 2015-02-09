@@ -108,61 +108,103 @@ Here I'll use JSON to structure the message. We'll use the REQ-REP pattern. We'l
 
 Here's the Julia server (file `zmq_server.jl`):
 
-	```julia
-	using JSON
-	using ZMQ
+```julia
+using JSON
+using ZMQ
 
-	const ctx = Context()
-	sock = Socket(ctx, REP)
-	ZMQ.bind(sock, "tcp://*:7788")
+const ctx = Context()
+sock = Socket(ctx, REP)
+ZMQ.bind(sock, "tcp://*:7788")
 
-	function triple(x)
-		sleep(10)
-		3x
-	end
+function triple(x)
+	sleep(10)
+	3x
+end
 
-	while true
-		println("Server running.")
-		msg = JSON.parse(bytestring(ZMQ.recv(sock)))
-		@show result = triple(float(msg["value"]))
-		ZMQ.send(sock, JSON.json({"result"=>result}))
-	end
-	```
+while true
+	println("Server running.")
+	msg = JSON.parse(bytestring(ZMQ.recv(sock)))
+	@show result = triple(float(msg["value"]))
+	ZMQ.send(sock, JSON.json({"result"=>result}))
+end
+```
 
 and in the number model of the web app we will define a calculation method that connects to this server
 	
-	```rb
-	#triple/app/models/number.rb
-	require 'ffi-rzmq'
-	require 'json'
+```rb
+#triple/app/models/number.rb
+require 'ffi-rzmq'
+require 'json'
 
-	class Number < ActiveRecord::Base
-	  def calculate
-	    
-	    context = ZMQ::Context.new
-	    sock = context.socket(ZMQ::REQ)
-	    sock.connect("tcp://localhost:7788")
-	    
-	    mgs_send = {:value => value}.to_json
-	    sock.send_string mgs_send
+class Number < ActiveRecord::Base
+  def calculate
+    
+    context = ZMQ::Context.new
+    sock = context.socket(ZMQ::REQ)
+    sock.connect("tcp://localhost:7788")
+    
+    mgs_send = {:value => value}.to_json
+    sock.send_string mgs_send
 
-	    msg_recv = ''
-	    sock.recv_string(msg_recv)
+    msg_recv = ''
+    sock.recv_string(msg_recv)
 
-	    result = JSON.parse(msg_recv)["result"]
-	    update_column :result, result
-	    update_column :calculated, true
-	    
-	    sock.close
-	    context.terminate
-	  end
-	  handle_asynchronously :calculate
-	  
-	end
-	```
+    result = JSON.parse(msg_recv)["result"]
+    update_column :result, result
+    update_column :calculated, true
+    
+    sock.close
+    context.terminate
+  end
+  handle_asynchronously :calculate
+  
+end
+```
 
 Notice the `handle_asynchronously` command from `delayed_job`, which will run this in the background, non-blockins so there will not be a web page time-out.
 
 ### Webapp
 
-Now back to the web app. This is the tricky part (at least for me).
+Now back to the web app. This is the tricky part (at least for me). This is also all one commit, because I had to find it out myself and these files are quite interconnected.
+
+Rails apparently follows the [Model-view-controller](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) pattern.
+
+Here we will use one model: `Number` with a single method that is just the client code from the section above.
+
+There is one controller `Triples` with a few methods:
+* `index` is the starting point and lists all calculated Numbers so far
+* `new` is empty
+* `calc` creates a new Number and initiates the calculation
+* `show` allows you to show the result
+* `status` checks whether the calculation is finished and will be used by the javascript
+
+There are a few basic views:
+* `index` lists the results so far and links to `new`. This is the root.
+* `new` handles the user input form that will point to `calc`
+* `calc` uses a javascript to poll through the `status` controller method whether the calculation is finished and then links to `show`
+* `show` just shows the result and links back to index
+
+Then there is the route file (`config/routes.rb`), which I don't fully understand but somehow got it to work. 
+
+And finally there's javascript (`app/javascripts/triples.coffe`). I don't know how this works, I just copied it from the Blog mentioned in the beginning.
+
+Now you need to have the julia server running:
+
+	../RoR_julia_eg$ julia zmq_server.jl
+
+and while you keep this running, start the delayed_job in another terminal (I couldn't get it working with daemons):
+	
+	../RoR_julia_eg/triple$ rake jobs:work
+
+And finally in a third terminal start the Rails server
+
+	../RoR_julia_eg/triple$ rails s
+
+Surf with your browser to (http://localhost:3000/) and voilà, it works!
+
+## Conclusion
+
+This is my first attempt at connecting a web app with julia. I hope this has been useful and again, feedback is a gift so feel free to tell me what you think through the issues.
+
+
+

@@ -1,6 +1,20 @@
-<h1>Triple it</h1>
+<h1>Triple It web app</h1>
 
-<p>
-	<%= link_to "Calculate a new value", triples_new_path %>
-</p>
+<p>	<%= link_to "Calculate a new value", triples_new_path %> </p>
+
+<h3>Results so far:</h3>
+ 
+<table>
+  <tr>
+    <th>Value</th>
+    <th>Result</th>
+  </tr>
+ 
+  <% @numbers.each do |n| %>
+    <tr>
+      <td><%= n.value %></td>
+      <td><%= n.result %></td>
+    </tr>
+  <% end %>
+</table>
 

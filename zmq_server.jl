@@ -12,7 +12,16 @@ end
 
 while true
 	println("Server running.")
+
 	msg = JSON.parse(bytestring(ZMQ.recv(sock)))
-	@show result = triple(float(msg["value"]))
+	
+	result =""
+	try
+		result = triple(float(msg["value"]))
+	catch
+		result = "julia function returned an error"
+	end
+	println(result)
+	
 	ZMQ.send(sock, JSON.json({"result"=>result}))
 end
