@@ -3,7 +3,7 @@ class CreateNumbers < ActiveRecord::Migration
     create_table :numbers do |t|
       t.float :value
       t.float :result
-      t.boolean :calculated
+      t.boolean :calculated, default: false
 
       t.timestamps null: false
     end
