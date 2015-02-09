@@ -1,28 +1,44 @@
-This example shows a way to connect a Ruby on Rails web application with julia through ZMQ.
+This example shows a way to connect a Ruby on Rails web application with julia through ZMQ. 
 
-Basically we create a ZMQ server in julia that will perform some predefined calculation as instructed from a web page. In this case, supply a number and *magically* multiply it by 3.
+I had no previous experience with ZMQ, ruby, Rails, html or javascript before this and only basic Julia knowledge. I'm just learning as I go along and I hope this write-up migth be helpful to you. 
 
-This example was inspired by [a julia-users topic](https://groups.google.com/forum/#!searchin/julia-users/zmq|sort:date/julia-users/umHiBwVLQ4g/8O-bC7UB2B0J), IJulia and the excellent [samurails blog post on delayed job](http://samurails.com/gems/delayed-job/). Parts of the code below is taken from that blog.
+All feedback welcome!
 
-## installation
+Basically we create a ZMQ server in Julia that will perform some predefined calculation as instructed from a web page. In this case, supply a number and *magically* multiply it by 3 :)
 
-I write this on Ubuntue 14.04. If you are using another platform, you will have to google some installation procedures yourself.
+This example was inspired by [a Julia-users forum topic](https://groups.google.com/forum/#!searchin/julia-users/zmq|sort:date/julia-users/umHiBwVLQ4g/8O-bC7UB2B0J), [IJulia](https://github.com/JuliaLang/IJulia.jl) and an excellent [samurails blog post on delayed_job](http://samurails.com/gems/delayed-job/). Parts of the code below is taken from that blog.
 
-To install Ruby on Rails, the easiest is using [rvm](http://rvm.io):
+# Installation
+
+I write this on Ubuntu 14.04. If you are using another platform, you will have to google some installation procedures yourself.
+
+To install Ruby on Rails, I simply use [rvm](http://rvm.io):
 
 	curl -sSL https://get.rvm.io | bash -s stable --rails
 
-I prefer working with a PostgreSQL database, but I assume this example to work fine with the standard MySQL. Install PostgreSQL on ubuntu (I know libpq-dev is necessary, the others I don't know):
+I prefer working with a PostgreSQL database, but I assume this example will work fine with MySQL or another database. Install PostgreSQL on Ubuntu (I know libpq-dev is necessary, the others I don't know):
 
 	sudo apt-get install postgresql-client pgadmin3 postgresql postgresql-contrib libpq-dev
 
-Of course you need julia installed. I used v0.3 for this example. See details on julialang.org. In julia you need to add the ZMQ package by simple `Pkg.add("ZMQ")`.
+For running the webapp locally you need `nodejs` installed:
+	
+	sudo apt-get install nodejs
+
+Of course you need Julia installed. I used v0.3 for this example. See details on [julialang.org](http://julialang.org/). In Julia you need to add the ZMQ package by simple `Pkg.add("ZMQ")` and similarly `Pkg.add("JSON")`.
 
 Once you download this example you should install the necessary gems listed in the gem file:
 
 	git clone https://github.com/Ken-B/RoR_julia_eg
 	cd RoR_julia_eg
 	bundle install
+
+To just run the example, I think you need to initiate and migrate the database:
+
+	rake db:create
+	rake db:migrate
+
+
+
 
 ## follow along
 
@@ -44,10 +60,6 @@ then install the dependencies:
 	
 	cd triple
 	bundle install
-
-In case you don't have nodejs installed:
-
-	sudo apt-get install nodejs
 
 Initiate your database with
 
@@ -94,7 +106,7 @@ A quick note on [ZMQ](http://en.wikipedia.org/wiki/%C3%98MQ), a high-performance
 
 Here I'll use JSON to structure the message. We'll use the REQ-REP pattern. We'll start a julia server as a REP service and later connect to it from Rails as a REQ.
 
-Here's the Julia server:
+Here's the Julia server (file `zmq_server.jl`):
 
 	```julia
 	using JSON
@@ -117,7 +129,7 @@ Here's the Julia server:
 	end
 	```
 
-and in the number model we will define a calculation method that connects to this server
+and in the number model of the web app we will define a calculation method that connects to this server
 	
 	```rb
 	#triple/app/models/number.rb
@@ -148,3 +160,9 @@ and in the number model we will define a calculation method that connects to thi
 	  
 	end
 	```
+
+Notice the `handle_asynchronously` command from `delayed_job`, which will run this in the background, non-blockins so there will not be a web page time-out.
+
+### Webapp
+
+Now back to the web app. This is the tricky part (at least for me).
