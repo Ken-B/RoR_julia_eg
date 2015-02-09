@@ -1,6 +1,6 @@
-This example shows a way to connect a Ruby on Rails web application with julia through ZMQ. 
+This example shows a way to connect a Ruby on Rails web application with Julia through ZMQ. 
 
-I had no previous experience with ZMQ, ruby, Rails, html or javascript before this and only basic Julia knowledge. I'm just learning as I go along and I hope this write-up migth be helpful to you. 
+I had no previous experience with ZMQ, Ruby, Rails, html or JavaScript before this and only basic Julia knowledge. I'm just learning as I go along and I hope this write-up migth be helpful to you. 
 
 All feedback welcome!
 
@@ -85,6 +85,12 @@ We start by adding a controller.
 and we set the root for our app:
 
 	# triple/config/routes.rb
+	Rails.application.routes.draw do
+  		get 'triples/index'
+  		get 'triples/new'
+  		root 'triples#index'
+  	end
+  	
 
 For the database we will use a `number` model with a `value` and `result` field for the input and output (= 3*input) fields, as well as a field `calculated` to indicate if the calculation has finished
 
@@ -161,11 +167,11 @@ class Number < ActiveRecord::Base
 end
 ```
 
-Notice the `handle_asynchronously` command from `delayed_job`, which will run this in the background, non-blockins so there will not be a web page time-out.
+Notice the `handle_asynchronously` command from `delayed_job`, which will run this in the background, non-blocking so there will not be a web page time-out.
 
 ### Webapp
 
-Now back to the web app. This is the tricky part (at least for me). This is also all one commit, because I had to find it out myself and these files are quite interconnected.
+Now back to the web app. This is the tricky part (at least for me). This is all in one commit, because I had to figure it out myself and these files are quite interconnected.
 
 Rails apparently follows the [Model-view-controller](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) pattern.
 
@@ -181,7 +187,7 @@ There is one controller `Triples` with a few methods:
 There are a few basic views:
 * `index` lists the results so far and links to `new`. This is the root.
 * `new` handles the user input form that will point to `calc`
-* `calc` uses a javascript to poll through the `status` controller method whether the calculation is finished and then links to `show`
+* `calc` starts the calculation in Julia and uses a javascript to poll through the `status` controller method whether it is finished and then links to `show`
 * `show` just shows the result and links back to index
 
 Then there is the route file (`config/routes.rb`), which I don't fully understand but somehow got it to work. 
@@ -204,7 +210,7 @@ Surf with your browser to (http://localhost:3000/) and voilà, it works!
 
 ## Conclusion
 
-This is my first attempt at connecting a web app with julia. I hope this has been useful and again, feedback is a gift so feel free to tell me what you think through the issues.
+This is my first attempt at connecting a web app with Julia. I'm happy to see it working. I hope this has been useful for you and again, feedback is a gift so feel free to tell me what you think by opening an issues, even just for comments.
 
 
 
