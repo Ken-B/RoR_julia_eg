@@ -1,0 +1,2 @@
+module TriplesHelper
+end
