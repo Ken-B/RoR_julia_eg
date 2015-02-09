@@ -1,0 +1,11 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  value: 1.5
+  result: 1.5
+  calculated: false
+
+two:
+  value: 1.5
+  result: 1.5
+  calculated: false
