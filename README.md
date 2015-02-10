@@ -37,10 +37,10 @@ To just run the example, I think you need to initiate and migrate the database:
 	rake db:create
 	rake db:migrate
 
+and then see the Run It section below.
 
 
-
-## follow along
+## Follow along
 
 I'll try to commit the outcome of each rails command and describe it in the commit message. Here's what I did.
 
