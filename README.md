@@ -194,11 +194,13 @@ Then there is the route file (`config/routes.rb`), which I don't fully understan
 
 And finally there's javascript (`app/javascripts/triples.coffe`). I don't know how this works, I just copied it from the Blog mentioned in the beginning.
 
-Now you need to have the julia server running:
+## Run it
+
+Start julia server:
 
 	../RoR_julia_eg$ julia zmq_server.jl
 
-and while you keep this running, start the delayed_job in another terminal (I couldn't get it working with daemons):
+and while you keep this running, start the delayed_job in another terminal (I couldn't get it working with daemons, so I used rake):
 	
 	../RoR_julia_eg/triple$ rake jobs:work
 
